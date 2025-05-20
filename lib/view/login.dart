@@ -50,7 +50,7 @@ class _LoginPageState extends State<LoginPage> {
             children: [
               Image.asset(
                 'assets/images/b.jpeg', // Replace with your image path
-                height: 300,
+                height: 100,
                 width: double.infinity,
               ),
 
