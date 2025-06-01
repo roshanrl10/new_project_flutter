@@ -16,7 +16,24 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'New Project',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(),
+
+      theme: ThemeData(
+        useMaterial3: false,
+        fontFamily: 'Poppins',
+        primarySwatch: Colors.orange,
+        scaffoldBackgroundColor: Colors.white,
+        textTheme: const TextTheme(
+          bodyLarge: TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
+          bodyMedium: TextStyle(fontSize: 16),
+        ),
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.orange,
+            foregroundColor: Colors.white,
+            textStyle: const TextStyle(fontWeight: FontWeight.bold),
+          ),
+        ),
+      ),
       initialRoute: '/splash',
       routes: {
         '/splash': (context) => const SplashScreen(),
