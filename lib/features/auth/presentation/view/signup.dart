@@ -1,61 +1,45 @@
 import 'package:flutter/material.dart';
-import 'auth_service.dart';
+import '../../../../view/auth_service.dart';
 
-class LoginPage extends StatefulWidget {
+class SignUpPage extends StatefulWidget {
+  const SignUpPage({super.key});
+
   @override
-  _LoginPageState createState() => _LoginPageState();
+  State<SignUpPage> createState() => _SignUpPageState();
 }
 
-class _LoginPageState extends State<LoginPage> {
+class _SignUpPageState extends State<SignUpPage> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
 
-  void _login() {
+  void _signUp() {
     if (_formKey.currentState!.validate()) {
-      final email = _emailController.text;
-      final password = _passwordController.text;
+      AuthService.register(_emailController.text, _passwordController.text);
 
-      if (AuthService.isUserValid(email, password)) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text("Login successful"),
-            duration: Duration(seconds: 2),
-          ),
-        );
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Signup successful"),
+          duration: Duration(seconds: 2),
+        ),
+      );
 
-        Future.delayed(Duration(seconds: 2), () {
-          Navigator.pushReplacementNamed(context, '/dashboard');
-        });
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text("Invalid email or password"),
-            duration: Duration(seconds: 2),
-          ),
-        );
-      }
+      Future.delayed(Duration(seconds: 2), () {
+        Navigator.pushReplacementNamed(context, '/login');
+      });
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Login")),
-
+      appBar: AppBar(title: Text("Sign Up")),
       body: Padding(
         padding: const EdgeInsets.all(20),
         child: Form(
           key: _formKey,
           child: Column(
             children: [
-              Image.asset(
-                'assets/images/b.jpeg', // Replace with your image path
-                height: 100,
-                width: double.infinity,
-              ),
-
-              SizedBox(height: 20),
               TextFormField(
                 controller: _emailController,
                 decoration: InputDecoration(labelText: "Email"),
@@ -76,12 +60,12 @@ class _LoginPageState extends State<LoginPage> {
                             : null,
               ),
               SizedBox(height: 20),
-              ElevatedButton(onPressed: _login, child: Text("Login")),
+              ElevatedButton(onPressed: _signUp, child: Text("Sign Up")),
               TextButton(
                 onPressed: () {
-                  Navigator.pushReplacementNamed(context, '/signup');
+                  Navigator.pushReplacementNamed(context, '/login');
                 },
-                child: Text("Sign Up"),
+                child: Text("Already have an account? Login"),
               ),
             ],
           ),
