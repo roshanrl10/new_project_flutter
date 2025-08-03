@@ -1,6 +1,16 @@
-import 'package:new_project_flutter/features/auth/domain/entity/user_entity.dart';
+import '../entity/auth_user.dart';
 
 abstract class AuthRepository {
-  Future<void> registerUser(AuthUser user);
-  Future<bool> loginUser(String email, String password);
+  Future<AuthUser> login(String email, String password);
+  Future<AuthUser> register(
+    String username,
+    String email,
+    String password, {
+    String? firstName,
+    String? lastName,
+  });
+  Future<void> logout();
+  Future<String?> getToken();
+  Future<AuthUser?> getCurrentUser();
+  Future<bool> isLoggedIn();
 }

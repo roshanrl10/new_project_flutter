@@ -1,14 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:new_project_flutter/features/auth/domain/repository/auth_repository.dart';
-import 'package:new_project_flutter/features/auth/presentation/view_model/login_view_model/login_bloc.dart';
-import 'package:new_project_flutter/features/auth/presentation/view_model/login_view_model/login_event.dart';
-import 'package:new_project_flutter/features/auth/presentation/view_model/login_view_model/login_state.dart';
-// import 'login_bloc.dart';
-// import 'login_event.dart';
-// import 'login_state.dart';
+import 'package:new_project_flutter/app/service_locator/notification_service.dart';
+import 'package:new_project_flutter/features/auth/presentation/view_model/auth_bloc.dart';
+import 'package:new_project_flutter/features/auth/presentation/view_model/auth_event.dart';
+import 'package:new_project_flutter/features/auth/presentation/view_model/auth_state.dart';
 
 class LoginPage extends StatefulWidget {
+  const LoginPage({super.key});
+
   @override
   _LoginPageState createState() => _LoginPageState();
 }
@@ -20,9 +19,9 @@ class _LoginPageState extends State<LoginPage> {
 
   void _onLoginPressed(BuildContext context) {
     if (_formKey.currentState!.validate()) {
-      BlocProvider.of<LoginBloc>(context).add(
-        LoginSubmitted(
-          email: _emailController.text,
+      BlocProvider.of<AuthBloc>(context).add(
+        LoginEvent(
+          email: _emailController.text.trim(),
           password: _passwordController.text,
         ),
       );
@@ -31,76 +30,154 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (_) => LoginBloc(RepositoryProvider.of<AuthRepository>(context)),
+    return BlocListener<AuthBloc, AuthState>(
+      listener: (context, state) {
+        if (state is AuthAuthenticated) {
+          // Show notification
+          NotificationService().showLoginSuccess(state.user.username);
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Login successful! Welcome back!')),
+          );
+          Future.delayed(Duration(seconds: 2), () {
+            Navigator.pushReplacementNamed(context, '/dashboard');
+          });
+        } else if (state is AuthError) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(state.message)));
+        }
+      },
       child: Scaffold(
-        appBar: AppBar(title: Text("Login")),
-        body: BlocListener<LoginBloc, LoginState>(
-          listener: (context, state) {
-            if (state is LoginSuccess) {
-              ScaffoldMessenger.of(
-                context,
-              ).showSnackBar(SnackBar(content: Text('Login successful')));
-              Future.delayed(Duration(seconds: 2), () {
-                Navigator.pushReplacementNamed(context, '/dashboard');
-              });
-            } else if (state is LoginFailure) {
-              ScaffoldMessenger.of(
-                context,
-              ).showSnackBar(SnackBar(content: Text(state.error)));
-            }
-          },
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                children: [
-                  Image.asset('assets/images/b.jpeg', height: 100),
-                  SizedBox(height: 20),
-                  TextFormField(
-                    controller: _emailController,
-                    decoration: InputDecoration(labelText: "Email"),
-                    validator:
-                        (value) =>
-                            (value == null || !value.contains('@'))
-                                ? "Enter valid email"
-                                : null,
+        backgroundColor: Colors.white,
+        appBar: AppBar(
+          backgroundColor: const Color(0xFFD6C8D6),
+          elevation: 0,
+          title: const Text(
+            "Login",
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: Colors.black,
+            ),
+          ),
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back, color: Colors.black),
+            onPressed: () => Navigator.pop(context),
+          ),
+        ),
+        body: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // Logo/Image
+                Image.asset('assets/images/b.jpeg', height: 120, width: 120),
+                const SizedBox(height: 30),
+
+                // Email field
+                TextFormField(
+                  controller: _emailController,
+                  decoration: InputDecoration(
+                    labelText: "Email",
+                    border: OutlineInputBorder(),
+                    prefixIcon: Icon(Icons.email),
                   ),
-                  TextFormField(
-                    controller: _passwordController,
-                    obscureText: true,
-                    decoration: InputDecoration(labelText: "Password"),
-                    validator:
-                        (value) =>
-                            (value == null || value.length < 6)
-                                ? "Password must be at least 6 characters"
-                                : null,
+                  keyboardType: TextInputType.emailAddress,
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return "Email is required";
+                    }
+                    if (!value.contains('@') || !value.contains('.')) {
+                      return "Enter valid email";
+                    }
+                    return null;
+                  },
+                ),
+
+                const SizedBox(height: 16),
+
+                // Password field
+                TextFormField(
+                  controller: _passwordController,
+                  obscureText: true,
+                  decoration: InputDecoration(
+                    labelText: "Password",
+                    border: OutlineInputBorder(),
+                    prefixIcon: Icon(Icons.lock),
                   ),
-                  SizedBox(height: 20),
-                  BlocBuilder<LoginBloc, LoginState>(
-                    builder: (context, state) {
-                      if (state is LoginLoading) {
-                        return CircularProgressIndicator();
-                      }
-                      return ElevatedButton(
-                        onPressed: () => _onLoginPressed(context),
-                        child: Text("Login"),
-                      );
-                    },
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return "Password is required";
+                    }
+                    if (value.length < 6) {
+                      return "Password must be at least 6 characters";
+                    }
+                    return null;
+                  },
+                ),
+
+                const SizedBox(height: 30),
+
+                // Login button
+                BlocBuilder<AuthBloc, AuthState>(
+                  builder: (context, state) {
+                    return SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed:
+                            state is AuthLoading
+                                ? null
+                                : () => _onLoginPressed(context),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFD6C8D6),
+                          foregroundColor: Colors.black,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                        child:
+                            state is AuthLoading
+                                ? const CircularProgressIndicator()
+                                : const Text(
+                                  "Login",
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                      ),
+                    );
+                  },
+                ),
+
+                const SizedBox(height: 20),
+
+                // Sign Up link
+                TextButton(
+                  onPressed: () {
+                    Navigator.pushReplacementNamed(context, '/signup');
+                  },
+                  child: const Text(
+                    "Don't have an account? Sign Up",
+                    style: TextStyle(color: Colors.blue, fontSize: 16),
                   ),
-                  TextButton(
-                    onPressed: () {
-                      Navigator.pushReplacementNamed(context, '/signup');
-                    },
-                    child: Text("Sign Up"),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
   }
 }

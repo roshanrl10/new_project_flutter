@@ -1,5 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:new_project_flutter/features/auth/domain/repository/auth_repository.dart';
+// import 'package:new_project_flutter/features/auth/domain/entity/auth_user.dart';
 import 'login_event.dart';
 import 'login_state.dart';
 
@@ -17,15 +18,11 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
 
     final normalizedEmail = event.email.trim().toLowerCase();
 
-    final isValid = await authRepository.loginUser(
-      normalizedEmail,
-      event.password,
-    );
-
-    if (isValid) {
+    try {
+      await authRepository.login(normalizedEmail, event.password);
       emit(LoginSuccess());
-    } else {
-      emit(LoginFailure(error: 'Invalid email or password'));
+    } catch (e) {
+      emit(LoginFailure(error: e.toString()));
     }
   }
 }
